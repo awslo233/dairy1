@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1e1e32">
+<title>心流日记</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #1e1e32;
+    --bg-card: #2a2a44;
+    --bg-hover: #33334d;
+    --text: #e8e8f0;
+    --text-muted: #9090a8;
+    --border: #3a3a55;
+    --accent: #7c5cff;
+    --accent-hover: #6b4dff;
+    --danger: #ff4d6d;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ===== Header ===== */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(30, 30, 50, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: var(--bg-hover); }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  /* ===== Search ===== */
+  .search-wrap {
+    padding: 12px 16px 0;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  /* ===== Filters ===== */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-row select,
+  .filter-row input[type="date"] {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    flex: 1;
+    min-width: 100px;
+  }
+  .filter-row select:focus,
+  .filter-row input[type="date"]:focus { border-color: var(--accent); }
+  .filter-row input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+    cursor: pointer;
+  }
+  .clear-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .clear-btn:active { background: var(--bg-hover); }
+  .filter-active { border-color: var(--accent) !important; }
+
+  /* ===== Main ===== */
+  main {
+    padding: 16px;
+    padding-bottom: 100px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .date-group { margin-bottom: 24px; }
+  .date-label {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    padding: 0 4px;
+    text-transform: uppercase;
+  }
+  .entry {
+    background: var(--bg-card);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.1s, background 0.15s;
+    position: relative;
+    border-left: 4px solid transparent;
+  }
+  .entry:active {
+    transform: scale(0.98);
+    background: var(--bg-hover);
+  }
+  .entry-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .entry-mood { font-size: 18px; }
+  .entry-time {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .entry-content {
+    color: var(--text);
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state svg {
+    width: 56px;
+    height: 56px;
+    opacity: 0.4;
+    margin-bottom: 16px;
+  }
+  .empty-state h3 {
+    font-size: 16px;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  /* ===== FAB ===== */
+  .fab {
+    position: fixed;
+    right: 20px;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    box-shadow: 0 6px 20px rgba(124, 92, 255, 0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .fab:active {
+    transform: scale(0.9);
+    background: var(--accent-hover);
+  }
+  .fab svg { width: 24px; height: 24px; }
+
+  /* ===== Modal ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.2s;
+  }
+  .modal-overlay.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--bg);
+    width: 100%;
+    max-width: 640px;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+  .modal-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .mood-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  .mood-item {
+    padding: 12px 4px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 2px solid transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .mood-item.selected {
+    border-color: var(--accent);
+    transform: scale(1.05);
+  }
+  .mood-emoji { font-size: 22px; display: block; margin-bottom: 2px; }
+  .mood-label {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .mood-item.selected .mood-label { color: var(--text); }
+
+  textarea.content-input {
+    width: 100%;
+    min-height: 200px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 14px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+  }
+  textarea.content-input:focus { border-color: var(--accent); }
+
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:active { background: var(--accent-hover); }
+  .btn-secondary { background: var(--bg-card); color: var(--text); }
+  .btn-secondary:active { background: var(--bg-hover); }
+  .btn-danger { background: var(--danger); color: white; }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { font-size: 15px; }
+  .setting-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-size: 14px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    text-align: center;
+    max-width: 80%;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ===== Detail view ===== */
+  .detail-mood-large {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+  .detail-time {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .detail-content {
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.7;
+  }
+
+  @media (min-width: 600px) {
+    .mood-grid { grid-template-columns: repeat(6, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>心流日记</h1>
+  <button class="icon-btn" onclick="openSettings()" aria-label="设置">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+</header>
+
+<div class="search-wrap">
+  <input type="text" class="search-input" id="searchText" placeholder="搜索日记..." oninput="applyFilters()">
+  <div class="filter-row">
+    <select id="filterMood" onchange="applyFilters()">
+      <option value="">所有心情</option>
+      <option value="happy">☀️ 开心</option>
+      <option value="calm">🌤️ 平静</option>
+      <option value="anxious">🌸 焦虑</option>
+      <option value="irritated">🌅 烦躁</option>
+      <option value="sad">🌧️ 低落</option>
+      <option value="excited">🌺 兴奋</option>
+    </select>
+    <input type="date" id="filterFrom" onchange="applyFilters()" title="开始日期">
+    <input type="date" id="filterTo" onchange="applyFilters()" title="结束日期">
+    <button class="clear-btn" onclick="clearFilters()">清除</button>
+  </div>
+</div>
+
+<main id="list"></main>
+
+<button class="fab" onclick="openEditor()" aria-label="写日记">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 5v14M5 12h14"></path>
+  </svg>
+</button>
+
+<!-- Editor Modal -->
+<div class="modal-overlay" id="editorModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="editorTitle">写日记</span>
+      <button class="icon-btn" onclick="closeEditor()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="mood-grid" id="moodGrid"></div>
+      <textarea class="content-input" id="contentInput" placeholder="今天发生了什么？写下你的想法..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEditor()">取消</button>
+      <button class="btn btn-primary" onclick="saveEntry()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">日记详情</span>
+      <button class="icon-btn" onclick="closeDetail()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="deleteEntry()" style="flex:0; padding:12px 16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+      </button>
+      <button class="btn btn-secondary" onclick="closeDetail()">关闭</button>
+      <button class="btn btn-primary" onclick="editFromDetail()">编辑</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">设置</span>
+      <button class="icon-btn" onclick="closeSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">导出日记</div>
+          <div class="setting-desc">保存为 Markdown 文件到下载文件夹</div>
+        </div>
+        <button class="btn btn-primary" style="flex:0; padding:10px 18px;" onclick="exportData()">导出</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">备份数据</div>
+          <div class="setting-desc">导出 JSON 文件，用于跨设备迁移</div>
+        </div>
+        <button class="btn btn-secondary" style="flex:0; padding:10px 18px;" onclick="backupData()">备份</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">导入数据</div>
+          <div class="setting-desc">从 JSON 备份文件恢复日记</div>
+        </div>
+        <button class="btn btn-secondary" style="flex:0; padding:10px 18px;" onclick="document.getElementById('importFile').click()">导入</button>
+        <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)">
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">应用信息</div>
+          <div class="setting-desc">心流日记 v1.0 · 完全本地运行</div>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">清除所有数据</div>
+          <div class="setting-desc">删除所有日记，不可恢复</div>
+        </div>
+        <button class="btn btn-danger" style="flex:0; padding:10px 18px;" onclick="clearAllData()">清除</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSettings()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ===== Mood Configuration =====
+  const MOODS = {
+    happy:     { label: '开心', emoji: '☀️', color: '#FFD166' },
+    calm:      { label: '平静', emoji: '🌤️', color: '#A8D8EA' },
+    anxious:   { label: '焦虑', emoji: '🌸', color: '#FFB3BA' },
+    irritated: { label: '烦躁', emoji: '🌅', color: '#FF9B7A' },
+    sad:       { label: '低落', emoji: '🌧️', color: '#B8C4D8' },
+    excited:   { label: '兴奋', emoji: '🌺', color: '#C3B1E1' },
+  };
+
+  const STORAGE_KEY = 'mindflow-diary-entries';
+  let entries = [];
+  let editingId = null;
+  let selectedMood = 'calm';
+  let currentDetailId = null;
+  let currentFilters = { text: '', mood: '', dateFrom: '', dateTo: '' };
+
+  // ===== Storage =====
+  function loadEntries() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      entries = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      entries = [];
+    }
+  }
+  function saveEntries() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  }
+
+  // ===== Date Utilities =====
+  const WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  function formatDate(iso) {
+    const d = new Date(iso);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const h = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return {
+      date: `${y}年${m}月${day}日`,
+      time: `${h}:${min}`,
+      weekday: WEEKDAYS[d.getDay()],
+      dateKey: `${y}-${m}-${day}`,
+    };
+  }
+
+  // ===== Filters =====
+  function applyFilters() {
+    currentFilters.text = document.getElementById('searchText').value;
+    currentFilters.mood = document.getElementById('filterMood').value;
+    currentFilters.dateFrom = document.getElementById('filterFrom').value;
+    currentFilters.dateTo = document.getElementById('filterTo').value;
+
+    // Highlight active filters
+    const moodSel = document.getElementById('filterMood');
+    const fromIn = document.getElementById('filterFrom');
+    const toIn = document.getElementById('filterTo');
+    moodSel.classList.toggle('filter-active', !!currentFilters.mood);
+    fromIn.classList.toggle('filter-active', !!currentFilters.dateFrom);
+    toIn.classList.toggle('filter-active', !!currentFilters.dateTo);
+
+    renderList();
+  }
+  function clearFilters() {
+    document.getElementById('searchText').value = '';
+    document.getElementById('filterMood').value = '';
+    document.getElementById('filterFrom').value = '';
+    document.getElementById('filterTo').value = '';
+    applyFilters();
+  }
+
+  // ===== Render List =====
+  function renderList() {
+    const listEl = document.getElementById('list');
+    let filtered = entries.slice().sort((a, b) =>
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    // Apply text search
+    if (currentFilters.text.trim()) {
+      const term = currentFilters.text.toLowerCase();
+      filtered = filtered.filter(e =>
+        e.content.toLowerCase().includes(term) ||
+        (MOODS[e.mood]?.label || '').toLowerCase().includes(term)
+      );
+    }
+    // Apply mood filter
+    if (currentFilters.mood) {
+      filtered = filtered.filter(e => e.mood === currentFilters.mood);
+    }
+    // Apply date range filter
+    if (currentFilters.dateFrom) {
+      const fromTime = new Date(currentFilters.dateFrom + 'T00:00:00').getTime();
+      filtered = filtered.filter(e => new Date(e.createdAt).getTime() >= fromTime);
+    }
+    if (currentFilters.dateTo) {
+      const toTime = new Date(currentFilters.dateTo + 'T23:59:59').getTime();
+      filtered = filtered.filter(e => new Date(e.createdAt).getTime() <= toTime);
+    }
+
+    if (filtered.length === 0) {
+      const hasFilter = currentFilters.text || currentFilters.mood ||
+                        currentFilters.dateFrom || currentFilters.dateTo;
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <h3>${hasFilter ? '没找到匹配的日记' : '还没有日记'}</h3>
+          <p>${hasFilter ? '试试调整筛选条件' : '点击右下角按钮写下第一篇日记'}</p>
+        </div>`;
+      return;
+    }
+
+    // Group by date
+    const groups = {};
+    filtered.forEach(e => {
+      const f = formatDate(e.createdAt);
+      const key = `${f.date} ${f.weekday}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({ ...e, _formatted: f });
+    });
+
+    let html = '';
+    for (const [dateLabel, items] of Object.entries(groups)) {
+      html += `<div class="date-group"><div class="date-label">${dateLabel}</div>`;
+      items.forEach(e => {
+        const mood = MOODS[e.mood] || MOODS.calm;
+        const preview = (e.content || '').slice(0, 200);
+        html += `
+          <div class="entry" style="border-left-color:${mood.color};" onclick="openDetail('${e.id}')">
+            <div class="entry-header">
+              <span class="entry-mood">${mood.emoji}</span>
+              <span class="entry-time">${e._formatted.time} · ${mood.label}</span>
+            </div>
+            <div class="entry-content">${escapeHtml(preview)}</div>
+          </div>`;
+      });
+      html += `</div>`;
+    }
+    listEl.innerHTML = html;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ===== Editor =====
+  function renderMoodGrid() {
+    const grid = document.getElementById('moodGrid');
+    grid.innerHTML = Object.entries(MOODS).map(([key, m]) => `
+      <div class="mood-item ${key === selectedMood ? 'selected' : ''}" onclick="selectMood('${key}')">
+        <span class="mood-emoji">${m.emoji}</span>
+        <span class="mood-label">${m.label}</span>
+      </div>
+    `).join('');
+  }
+  function selectMood(key) {
+    selectedMood = key;
+    renderMoodGrid();
+  }
+  function openEditor(entry = null) {
+    if (entry) {
+      editingId = entry.id;
+      selectedMood = entry.mood;
+      document.getElementById('contentInput').value = entry.content || '';
+      document.getElementById('editorTitle').textContent = '编辑日记';
+    } else {
+      editingId = null;
+      selectedMood = 'calm';
+      document.getElementById('contentInput').value = '';
+      document.getElementById('editorTitle').textContent = '写日记';
+    }
+    renderMoodGrid();
+    document.getElementById('editorModal').classList.add('active');
+  }
+  function closeEditor() {
+    document.getElementById('editorModal').classList.remove('active');
+  }
+  function saveEntry() {
+    const content = document.getElementById('contentInput').value.trim();
+    if (!content) {
+      showToast('请输入日记内容');
+      return;
+    }
+    if (editingId) {
+      const idx = entries.findIndex(e => e.id === editingId);
+      if (idx >= 0) {
+        entries[idx] = { ...entries[idx], mood: selectedMood, content, updatedAt: new Date().toISOString() };
+      }
+    } else {
+      entries.unshift({
+        id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        createdAt: new Date().toISOString(),
+        mood: selectedMood,
+        content,
+      });
+    }
+    saveEntries();
+    closeEditor();
+    renderList();
+    showToast(editingId ? '已更新' : '已保存');
+  }
+
+  // ===== Detail =====
+  function openDetail(id) {
+    const e = entries.find(x => x.id === id);
+    if (!e) return;
+    currentDetailId = id;
+    const f = formatDate(e.createdAt);
+    const mood = MOODS[e.mood] || MOODS.calm;
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-mood-large">${mood.emoji}</div>
+      <div class="detail-time">${f.date} ${f.time} · ${f.weekday} · ${mood.label}</div>
+      <div class="detail-content">${escapeHtml(e.content)}</div>
+    `;
+    document.getElementById('detailModal').classList.add('active');
+  }
+  function closeDetail() {
+    document.getElementById('detailModal').classList.remove('active');
+    currentDetailId = null;
+  }
+  function editFromDetail() {
+    if (!currentDetailId) return;
+    const e = entries.find(x => x.id === currentDetailId);
+    closeDetail();
+    setTimeout(() => openEditor(e), 200);
+  }
+  function deleteEntry() {
+    if (!currentDetailId) return;
+    if (!confirm('确定删除这篇日记吗？删除后无法恢复。')) return;
+    entries = entries.filter(e => e.id !== currentDetailId);
+    saveEntries();
+    closeDetail();
+    renderList();
+    showToast('已删除');
+  }
+
+  // ===== Settings =====
+  function openSettings() {
+    document.getElementById('settingsModal').classList.add('active');
+  }
+  function closeSettings() {
+    document.getElementById('settingsModal').classList.remove('active');
+  }
+  function clearAllData() {
+    if (!confirm('确定要清除所有日记吗？此操作不可恢复！')) return;
+    if (!confirm('再次确认：所有日记将被永久删除！')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    entries = [];
+    closeSettings();
+    renderList();
+    showToast('数据已清除');
+  }
+
+  // ===== Export =====
+  async function exportData() {
+    if (entries.length === 0) {
+      showToast('暂无日记可导出');
+      return;
+    }
+    const sorted = entries.slice().sort((a, b) =>
+      new Date(a.createdAt) - new Date(b.createdAt)
+    );
+    const now = formatDate(new Date().toISOString());
+    let md = `# 我的日记记录\n\n导出时间：${now.date} ${now.time}\n导出范围：全部记录（共 ${sorted.length} 篇）\n\n---\n\n`;
+    const groups = {};
+    sorted.forEach(e => {
+      const f = formatDate(e.createdAt);
+      const key = `${f.date} ${f.weekday}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({ ...e, _f: f });
+    });
+    for (const [dateLabel, items] of Object.entries(groups)) {
+      md += `## ${dateLabel}\n\n`;
+      items.forEach(e => {
+        const mood = MOODS[e.mood] || MOODS.calm;
+        md += `### ${mood.emoji} ${e._f.time} · ${mood.label}\n\n${e.content}\n\n---\n\n`;
+      });
+    }
+    const filename = `心流日记_${now.dateKey || now.date}.md`;
+    await saveFile(filename, md, 'text/markdown');
+  }
+
+  // ===== Backup (JSON for cross-device migration) =====
+  async function backupData() {
+    if (entries.length === 0) {
+      showToast('暂无日记可备份');
+      return;
+    }
+    const now = formatDate(new Date().toISOString());
+    const backup = {
+      app: 'mindflow-diary',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      count: entries.length,
+      entries: entries,
+    };
+    const filename = `心流日记_备份_${now.dateKey || now.date}.json`;
+    await saveFile(filename, JSON.stringify(backup, null, 2), 'application/json');
+  }
+
+  // ===== Import (restore from JSON) =====
+  async function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = ''; // reset for next time
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      // Validate format
+      if (!data || typeof data !== 'object') {
+        throw new Error('文件格式不正确');
+      }
+      let importedEntries = [];
+      if (Array.isArray(data)) {
+        // Plain array format
+        importedEntries = data;
+      } else if (Array.isArray(data.entries)) {
+        // { entries: [...] } format
+        importedEntries = data.entries;
+      } else {
+        throw new Error('未找到日记数据');
+      }
+
+      // Validate each entry
+      importedEntries = importedEntries.filter(e =>
+        e && typeof e === 'object' && e.id && e.createdAt && e.content
+      );
+      if (importedEntries.length === 0) {
+        showToast('文件中没有有效的日记');
+        return;
+      }
+
+      // Merge: skip entries with existing id
+      const existingIds = new Set(entries.map(e => e.id));
+      const newOnes = importedEntries.filter(e => !existingIds.has(e.id));
+      const dupCount = importedEntries.length - newOnes.length;
+
+      if (newOnes.length === 0) {
+        showToast(`所有 ${importedEntries.length} 篇日记都已存在，未导入`);
+        return;
+      }
+
+      let msg = `找到 ${importedEntries.length} 篇日记，将导入 ${newOnes.length} 篇`;
+      if (dupCount > 0) msg += `（跳过 ${dupCount} 篇重复）`;
+      if (!confirm(msg + '，是否继续？')) return;
+
+      entries = entries.concat(newOnes);
+      saveEntries();
+      renderList();
+      showToast(`已导入 ${newOnes.length} 篇日记`);
+    } catch (e) {
+      console.error('Import failed:', e);
+      showToast('导入失败：' + (e.message || '文件解析错误'));
+    }
+  }
+
+  async function saveFile(filename, content, mimeType) {
+    // Try Capacitor Filesystem first
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
+      try {
+        const { Filesystem, Directory, Encoding } = window.Capacitor.Plugins.Filesystem;
+        const base64 = btoa(unescape(encodeURIComponent(content)));
+        await Filesystem.writeFile({
+          path: 'Download/' + filename,
+          data: base64,
+          directory: Directory.ExternalStorage,
+          encoding: Encoding.UTF8,
+          recursive: true,
+        });
+        showToast('已保存到下载文件夹');
+        return;
+      } catch (e) {
+        console.warn('Filesystem failed, fallback:', e);
+      }
+    }
+    // Fallback: blob download
+    try {
+      const blob = new Blob([content], { type: mimeType || 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      showToast('已下载');
+    } catch (e) {
+      // Last resort: Web Share API
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: filename, text: content });
+        } catch (err) {}
+      }
+    }
+  }
+
+  // ===== Toast =====
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  // ===== Init =====
+  loadEntries();
+  renderList();
+
+  // Close modal on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('active');
+    });
+  });
+</script>
+</body>
+</html>
