@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1e1e32" id="themeColorMeta">
+<title>心流日记</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root, [data-theme="dark"] {
+    --bg: #1e1e32;
+    --bg-card: #2a2a44;
+    --bg-hover: #33334d;
+    --bg-nav: #18182a;
+    --text: #e8e8f0;
+    --text-muted: #9090a8;
+    --border: #3a3a55;
+    --accent: #7c5cff;
+    --accent-hover: #6b4dff;
+    --accent-soft: rgba(124, 92, 255, 0.18);
+    --danger: #ff4d6d;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="light"] {
+    --bg: #f5f4fb;
+    --bg-card: #ffffff;
+    --bg-hover: #ece9f8;
+    --bg-nav: #ffffff;
+    --text: #1e1e32;
+    --text-muted: #787896;
+    --border: #e0dcec;
+    --accent: #6b4dff;
+    --accent-hover: #5a40e0;
+    --accent-soft: rgba(107, 77, 255, 0.12);
+    --danger: #e63946;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
+  }
+  body { padding-top: env(safe-area-inset-top); }
+
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 95%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { font-size: 19px; font-weight: 600; letter-spacing: 0.5px; }
+  .icon-btn {
+    background: transparent; border: none; color: var(--text);
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s; flex-shrink: 0;
+  }
+  .icon-btn:active { background: var(--bg-hover); }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  nav.bottom-nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    background: var(--bg-nav);
+    border-top: 1px solid var(--border);
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+    display: flex; justify-content: space-around;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px; padding: 6px 0;
+    color: var(--text-muted); cursor: pointer; border: none;
+    background: transparent; font-family: inherit; font-size: 11px;
+    transition: color 0.15s;
+  }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item.active { color: var(--accent); }
+  .nav-item:active { opacity: 0.7; }
+
+  .page {
+    display: none;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    min-height: 100vh;
+    animation: fadeIn 0.25s ease;
+  }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .page-inner { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+  /* ===== Write Page ===== */
+  .date-header {
+    font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--text);
+  }
+  .format-toolbar {
+    display: flex; gap: 4px; margin-bottom: 10px;
+    padding: 6px; background: var(--bg-card); border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .tool-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: none;
+    background: transparent; color: var(--text-muted);
+    cursor: pointer; font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .tool-btn:active, .tool-btn.active { background: var(--accent-soft); color: var(--accent); }
+  .tool-sep { width: 1px; background: var(--border); margin: 4px 6px; }
+
+  textarea.write-input {
+    width: 100%; min-height: 260px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text); padding: 14px; border-radius: 12px;
+    font-family: inherit; font-size: 15px; line-height: 1.7;
+    resize: vertical; outline: none; transition: border-color 0.15s;
+  }
+  textarea.write-input:focus { border-color: var(--accent); }
+
+  .section-label {
+    font-size: 13px; color: var(--text-muted);
+    margin: 16px 0 10px;
+  }
+  .mood-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 20px;
+  }
+  .mood-item {
+    padding: 12px 4px; border-radius: 12px; background: var(--bg-card);
+    border: 2px solid transparent; cursor: pointer; text-align: center;
+    transition: all 0.15s;
+  }
+  .mood-item.selected { border-color: var(--accent); background: var(--accent-soft); transform: scale(1.05); }
+  .mood-emoji { font-size: 22px; display: block; margin-bottom: 2px; }
+  .mood-label { font-size: 11px; color: var(--text-muted); }
+  .mood-item.selected .mood-label { color: var(--text); }
+
+  .save-btn {
+    width: 100%; padding: 14px; border-radius: 12px; border: none;
+    background: var(--accent); color: white; font-size: 16px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .save-btn:active { background: var(--accent-hover); transform: scale(0.98); }
+  .save-btn svg { width: 20px; height: 20px; }
+
+  /* ===== Calendar Page ===== */
+  .view-tabs {
+    display: flex; background: var(--bg-card); border-radius: 12px;
+    padding: 4px; margin-bottom: 16px; border: 1px solid var(--border);
+  }
+  .view-tab {
+    flex: 1; padding: 10px; border-radius: 8px; border: none;
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .view-tab.active { background: var(--accent-soft); color: var(--accent); }
+  .view-tab svg { width: 16px; height: 16px; }
+
+  .calendar-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; padding: 0 4px;
+  }
+  .calendar-nav button {
+    width: 36px; height: 36px; border-radius: 10px; border: none;
+    background: var(--bg-card); color: var(--text); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .calendar-nav button:active { background: var(--bg-hover); }
+  .calendar-nav h3 { font-size: 16px; font-weight: 600; }
+
+  .calendar {
+    background: var(--bg-card); border-radius: 16px; padding: 14px;
+    border: 1px solid var(--border);
+  }
+  .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 8px; }
+  .cal-weekdays div { text-align: center; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-day {
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; border-radius: 10px; cursor: pointer;
+    font-size: 14px; transition: all 0.15s; position: relative; color: var(--text);
+  }
+  .cal-day:active { background: var(--bg-hover); }
+  .cal-day.other-month { color: var(--text-muted); opacity: 0.4; }
+  .cal-day.today { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .cal-day.has-entries::after {
+    content: ''; position: absolute; bottom: 4px; left: 50%;
+    transform: translateX(-50%); width: 5px; height: 5px;
+    border-radius: 50%; background: var(--accent);
+  }
+  .cal-day.selected { background: var(--accent); color: white; }
+  .cal-day.selected::after { background: white; }
+
+  .day-entries { margin-top: 20px; }
+  .day-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; padding: 0 4px;
+  }
+  .day-header h3 { font-size: 15px; font-weight: 600; }
+  .day-count { font-size: 13px; color: var(--text-muted); }
+
+  .entry-card {
+    background: var(--bg-card); border-radius: 14px; padding: 14px 16px;
+    margin-bottom: 10px; border-left: 4px solid transparent;
+    box-shadow: var(--shadow); transition: background 0.15s;
+  }
+  .entry-card:active { background: var(--bg-hover); }
+  .entry-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .entry-mood { font-size: 16px; }
+  .entry-time { color: var(--text-muted); font-size: 13px; }
+  .entry-actions { margin-left: auto; display: flex; gap: 4px; }
+  .entry-actions button {
+    width: 28px; height: 28px; border-radius: 8px; border: none;
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .entry-actions button:active { background: var(--bg-hover); color: var(--accent); }
+  .entry-actions svg { width: 15px; height: 15px; }
+  .entry-text { color: var(--text); font-size: 14px; white-space: pre-wrap; word-break: break-word; line-height: 1.6; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-state svg { width: 48px; height: 48px; opacity: 0.4; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 15px; margin-bottom: 4px; color: var(--text); }
+
+  /* ===== Search Page ===== */
+  .search-card {
+    background: var(--bg-card); border-radius: 16px; padding: 18px;
+    border: 1px solid var(--border); margin-bottom: 16px;
+  }
+  .filter-label {
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    margin: 12px 0 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .filter-label:first-child { margin-top: 0; }
+  .filter-label svg { width: 14px; height: 14px; }
+  .search-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 14px; border-radius: 10px;
+    font-size: 14px; outline: none; font-family: inherit;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .date-row { display: flex; gap: 8px; align-items: center; }
+  .date-row input[type="date"] {
+    flex: 1; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 12px; border-radius: 10px;
+    font-size: 13px; outline: none; font-family: inherit;
+  }
+  .date-row span { color: var(--text-muted); font-size: 13px; flex-shrink: 0; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 7px 12px; background: var(--bg); border: 1.5px solid var(--border);
+    color: var(--text); border-radius: 18px; cursor: pointer;
+    font-size: 13px; transition: all 0.15s; display: inline-flex;
+    align-items: center; gap: 4px; font-family: inherit;
+  }
+  .chip:active { opacity: 0.8; }
+  .chip.selected { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .chip .emoji { font-size: 14px; }
+  .search-btn {
+    width: 100%; margin-top: 16px; padding: 14px; border-radius: 12px;
+    border: none; background: var(--accent); color: white; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .search-btn:active { background: var(--accent-hover); }
+  .search-btn svg { width: 18px; height: 18px; }
+
+  .results-section { margin-top: 16px; }
+  .results-hint { text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0; }
+  .results-count { text-align: center; color: var(--accent); font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+
+  /* ===== Sheet Overlays ===== */
+  .sheet-overlay {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
+    z-index: 100; display: none; align-items: flex-end;
+    animation: fadeIn 0.2s;
+  }
+  .sheet-overlay.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .sheet {
+    background: var(--bg); width: 100%; max-width: 640px;
+    height: 66.67vh;
+    border-radius: 20px 20px 0 0;
+    display: flex; flex-direction: column;
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-bottom: env(safe-area-inset-bottom);
+    margin: 0 auto;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .sheet-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .sheet-title { font-size: 16px; font-weight: 600; }
+  .sheet-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+  .sheet-footer {
+    padding: 12px 18px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; flex-shrink: 0;
+  }
+
+  .detail-mood-large { font-size: 32px; margin-bottom: 8px; }
+  .detail-time { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; }
+  .detail-content { white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
+
+  /* Settings */
+  .setting-group { margin-bottom: 20px; }
+  .setting-group-title {
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .setting-group-title svg { width: 14px; height: 14px; }
+  .setting-card {
+    background: var(--bg-card); border-radius: 14px; padding: 14px;
+    border: 1px solid var(--border);
+  }
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { font-size: 15px; flex: 1; }
+  .setting-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .theme-toggle {
+    display: flex; background: var(--bg); border-radius: 8px;
+    border: 1px solid var(--border); overflow: hidden; padding: 2px;
+    width: 100%;
+  }
+  .theme-option {
+    flex: 1; padding: 8px 10px; font-size: 13px; cursor: pointer;
+    border-radius: 6px; color: var(--text-muted);
+    transition: all 0.15s; border: none; background: transparent; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .theme-option.active { background: var(--accent); color: white; }
+  .theme-desc { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+  .btn {
+    flex: 1; padding: 12px; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 500; cursor: pointer;
+    transition: background 0.15s; font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:active { background: var(--accent-hover); }
+  .btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:active { background: var(--bg-hover); }
+  .btn-danger { background: var(--danger); color: white; }
+
+  .list-date-group { margin-bottom: 20px; }
+  .list-date-label {
+    color: var(--text-muted); font-size: 12px; font-weight: 600;
+    letter-spacing: 1px; margin-bottom: 10px; padding: 0 4px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9); color: white;
+    padding: 14px 22px; border-radius: 12px;
+    font-size: 14px; z-index: 9999;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.2s; text-align: center; max-width: 80%;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (min-width: 600px) {
+    .mood-grid { grid-template-columns: repeat(6, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="pageTitle">写日记</h1>
+  <button class="icon-btn" onclick="openSettings()" aria-label="设置">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+</header>
+
+<!-- ===== Page 1: Write ===== -->
+<section class="page active" id="page-write">
+  <div class="page-inner">
+    <div class="date-header" id="writeDate"></div>
+
+    <div class="format-toolbar">
+      <button class="tool-btn" onclick="insertFormat('bold')" title="加粗">B</button>
+      <button class="tool-btn" onclick="insertFormat('italic')" title="斜体">I</button>
+      <div class="tool-sep"></div>
+      <button class="tool-btn" onclick="insertFormat('ul')" title="无序列表">•</button>
+      <button class="tool-btn" onclick="insertFormat('ol')" title="有序列表">≡</button>
+    </div>
+
+    <textarea class="write-input" id="writeContent" placeholder="今天想写点什么？随便聊聊就好..."></textarea>
+
+    <div class="section-label">此刻的心情</div>
+    <div class="mood-grid" id="writeMoodGrid"></div>
+
+    <button class="save-btn" onclick="saveFromHome()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+        <polyline points="7 3 7 8 15 8"></polyline>
+      </svg>
+      保存日记
+    </button>
+  </div>
+</section>
+
+<!-- ===== Page 2: Calendar ===== -->
+<section class="page" id="page-calendar">
+  <div class="page-inner">
+    <div class="view-tabs">
+      <button class="view-tab active" id="tabCal" onclick="switchCalTab('cal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        日历
+      </button>
+      <button class="view-tab" id="tabList" onclick="switchCalTab('list')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        日记 (<span id="totalCount">0</span>)
+      </button>
+    </div>
+
+    <div id="calView">
+      <div class="calendar-nav">
+        <button onclick="changeMonth(-1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <h3 id="calTitle"></h3>
+        <button onclick="changeMonth(1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+      <div class="calendar">
+        <div class="cal-weekdays">
+          <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+        </div>
+        <div class="cal-days" id="calDays"></div>
+      </div>
+      <div class="day-entries" id="dayEntries"></div>
+    </div>
+
+    <div id="listView" style="display:none;"></div>
+  </div>
+</section>
+
+<!-- ===== Page 3: Search ===== -->
+<section class="page" id="page-search">
+  <div class="page-inner">
+    <div class="search-card">
+      <div class="filter-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        关键词
+      </div>
+      <input type="text" class="search-input" id="searchKw" placeholder="输入关键词搜索日记内容...">
+
+      <div class="filter-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        时间范围
+      </div>
+      <div class="date-row">
+        <input type="date" id="searchFrom">
+        <span>至</span>
+        <input type="date" id="searchTo">
+      </div>
+
+      <div class="filter-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        情绪筛选
+      </div>
+      <div class="chip-row" id="searchMoodChips"></div>
+
+      <button class="search-btn" onclick="doSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        搜索
+      </button>
+    </div>
+
+    <div class="results-section" id="searchResults">
+      <div class="results-hint">
+        设置搜索条件，查找你的日记<br>
+        支持关键词、时间范围、情绪筛选
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Bottom Nav ===== -->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-tab="write" onclick="switchTab('write')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20h9"></path>
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+    </svg>
+    <span>写日记</span>
+  </button>
+  <button class="nav-item" data-tab="calendar" onclick="switchTab('calendar')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+    <span>看日记</span>
+  </button>
+  <button class="nav-item" data-tab="search" onclick="switchTab('search')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <span>搜索</span>
+  </button>
+</nav>
+
+<!-- ===== Detail Sheet ===== -->
+<div class="sheet-overlay" id="detailSheet">
+  <div class="sheet">
+    <div class="sheet-header">
+      <span class="sheet-title">日记详情</span>
+      <button class="icon-btn" onclick="closeDetail()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="detailBody"></div>
+    <div class="sheet-footer">
+      <button class="btn btn-danger" onclick="deleteEntry()" style="flex:0; padding:12px 16px;">删除</button>
+      <button class="btn btn-secondary" onclick="closeDetail()">关闭</button>
+      <button class="btn btn-primary" onclick="editFromDetail()">编辑</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Editor Sheet ===== -->
+<div class="sheet-overlay" id="editorSheet">
+  <div class="sheet">
+    <div class="sheet-header">
+      <span class="sheet-title" id="editorTitle">编辑日记</span>
+      <button class="icon-btn" onclick="closeEditor()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="section-label">心情</div>
+      <div class="mood-grid" id="editorMoodGrid"></div>
+      <div class="section-label">内容</div>
+      <textarea class="write-input" id="editorContent" placeholder="日记内容..." style="min-height:200px;"></textarea>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-secondary" onclick="closeEditor()">取消</button>
+      <button class="btn btn-primary" onclick="saveEditedEntry()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Settings Sheet ===== -->
+<div class="sheet-overlay" id="settingsSheet">
+  <div class="sheet">
+    <div class="sheet-header">
+      <span class="sheet-title">设置</span>
+      <button class="icon-btn" onclick="closeSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="setting-group">
+        <div class="setting-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          主题模式
+        </div>
+        <div class="setting-card">
+          <div class="theme-toggle" id="themeToggle">
+            <button class="theme-option" data-mode="auto">自动</button>
+            <button class="theme-option" data-mode="light">浅色</button>
+            <button class="theme-option" data-mode="dark">深色</button>
+          </div>
+          <div class="theme-desc" id="themeDesc">22:00 - 08:00 自动切换深色模式</div>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+          数据管理
+        </div>
+        <div class="setting-card">
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">分享日记</div>
+              <div class="setting-desc">通过系统分享发送到其他 App</div>
+            </div>
+            <button class="btn btn-primary" style="flex:0; padding:10px 18px;" onclick="shareData()">分享到...</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">导出 Markdown</div>
+              <div class="setting-desc">导出 .md 文件，方便阅读</div>
+            </div>
+            <button class="btn btn-primary" style="flex:0; padding:10px 18px;" onclick="exportData()">导出</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">备份（JSON）</div>
+              <div class="setting-desc">用于跨设备迁移</div>
+            </div>
+            <button class="btn btn-secondary" style="flex:0; padding:10px 18px;" onclick="backupData()">备份</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">导入（JSON）</div>
+              <div class="setting-desc">从备份文件恢复</div>
+            </div>
+            <button class="btn btn-secondary" style="flex:0; padding:10px 18px;" onclick="document.getElementById('importFile').click()">导入</button>
+          </div>
+          <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)">
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          其他
+        </div>
+        <div class="setting-card">
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">应用信息</div>
+              <div class="setting-desc" id="appInfoDesc">心流日记 v2.0 · 完全本地运行</div>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">清除所有数据</div>
+              <div class="setting-desc">删除所有日记，不可恢复</div>
+            </div>
+            <button class="btn btn-danger" style="flex:0; padding:10px 18px;" onclick="clearAllData()">清除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-secondary" onclick="closeSettings()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const MOODS = {
+    happy:     { label: '开心', emoji: '☀️', color: '#FFD166' },
+    calm:      { label: '平静', emoji: '🌤️', color: '#A8D8EA' },
+    anxious:   { label: '焦虑', emoji: '🌸', color: '#FFB3BA' },
+    irritated: { label: '烦躁', emoji: '🌅', color: '#FF9B7A' },
+    sad:       { label: '低落', emoji: '🌧️', color: '#B8C4D8' },
+    excited:   { label: '兴奋', emoji: '🌺', color: '#C3B1E1' },
+  };
+
+  const STORAGE_KEY = 'mindflow-diary-entries';
+  const THEME_KEY = 'mindflow-diary-theme';
+  let entries = [];
+  let currentTab = 'write';
+  let homeMood = 'calm';
+  let editingId = null;
+  let editorMood = 'calm';
+  let currentDetailId = null;
+
+  let calYear, calMonth;
+  let selectedDate = null;
+  let calViewMode = 'cal';
+
+  const searchState = { moods: new Set(), from: '', to: '', kw: '' };
+
+  // ===== Theme =====
+  function getEffectiveTheme() {
+    const mode = localStorage.getItem(THEME_KEY) || 'auto';
+    if (mode === 'dark' || mode === 'light') return mode;
+    const h = new Date().getHours();
+    return (h >= 22 || h < 8) ? 'dark' : 'light';
+  }
+  function applyTheme() {
+    const theme = getEffectiveTheme();
+    document.documentElement.setAttribute('data-theme', theme);
+    const meta = document.getElementById('themeColorMeta');
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#1e1e32' : '#f5f4fb');
+    const mode = localStorage.getItem(THEME_KEY) || 'auto';
+    document.querySelectorAll('#themeToggle .theme-option').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    const desc = document.getElementById('themeDesc');
+    if (desc) desc.textContent = mode === 'auto' ? '22:00 - 08:00 自动切换深色模式' : (mode === 'dark' ? '已强制深色模式' : '已强制浅色模式');
+  }
+  function setThemeMode(mode) {
+    localStorage.setItem(THEME_KEY, mode);
+    applyTheme();
+    showToast(mode === 'auto' ? '已切换为自动模式' : (mode === 'dark' ? '已切换为深色' : '已切换为浅色'));
+  }
+
+  // ===== Storage =====
+  function loadEntries() {
+    try { entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch (e) { entries = []; }
+  }
+  function saveEntries() { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
+
+  // ===== Date Utils =====
+  const WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+    const h = String(d.getHours()).padStart(2,'0'), min = String(d.getMinutes()).padStart(2,'0');
+    return {
+      date: `${y}年${m}月${day}日`, time: `${h}:${min}`,
+      weekday: WEEKDAYS[d.getDay()], dateKey: `${y}-${m}-${day}`,
+      timestamp: new Date(y, d.getMonth(), d.getDate()).getTime(),
+    };
+  }
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  // ===== Tab Switch =====
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + tab).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+    const titles = { write: '写日记', calendar: '看日记', search: '搜索日记' };
+    document.getElementById('pageTitle').textContent = titles[tab];
+    if (tab === 'calendar') { renderCalendar(); renderDayEntries(); }
+    if (tab === 'search') { renderSearchMoodChips(); }
+    window.scrollTo(0, 0);
+  }
+
+  // ===== Write Page =====
+  function renderWriteDate() {
+    const d = new Date();
+    const f = fmtDate(d.toISOString());
+    const h = d.getHours();
+    let greet = '';
+    if (h < 5) greet = '夜深了 🌙';
+    else if (h < 9) greet = '早上好 ☀️';
+    else if (h < 12) greet = '上午好 🌿';
+    else if (h < 14) greet = '中午好 🍱';
+    else if (h < 18) greet = '下午好 🌤️';
+    else greet = '晚上好 🌆';
+    document.getElementById('writeDate').textContent = `${greet} · ${f.date} ${f.weekday}`;
+  }
+  function renderWriteMoodGrid() {
+    const grid = document.getElementById('writeMoodGrid');
+    if (!grid) return;
+    grid.innerHTML = Object.entries(MOODS).map(([key, m]) => `
+      <div class="mood-item ${key === homeMood ? 'selected' : ''}" onclick="selectHomeMood('${key}')">
+        <span class="mood-emoji">${m.emoji}</span><span class="mood-label">${m.label}</span>
+      </div>`).join('');
+  }
+  function selectHomeMood(key) { homeMood = key; renderWriteMoodGrid(); }
+
+  function insertFormat(type) {
+    const ta = document.getElementById('writeContent');
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    const text = ta.value;
+    let before = text.slice(0, start), sel = text.slice(start, end), after = text.slice(end);
+    if (type === 'bold') { ta.value = before + '**' + (sel || '粗体文字') + '**' + after; }
+    else if (type === 'italic') { ta.value = before + '*' + (sel || '斜体文字') + '*' + after; }
+    else if (type === 'ul') { ta.value = before + '\n- ' + (sel || '列表项') + after; }
+    else if (type === 'ol') { ta.value = before + '\n1. ' + (sel || '列表项') + after; }
+    ta.focus(); ta.selectionStart = ta.selectionEnd = ta.value.length;
+  }
+
+  function saveFromHome() {
+    const content = document.getElementById('writeContent').value.trim();
+    if (!content) { showToast('请输入日记内容'); return; }
+    entries.unshift({
+      id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
+      createdAt: new Date().toISOString(), mood: homeMood, content,
+    });
+    saveEntries();
+    document.getElementById('writeContent').value = '';
+    homeMood = 'calm';
+    renderWriteMoodGrid();
+    showToast('已保存');
+  }
+
+  // ===== Calendar =====
+  function renderCalendar() {
+    if (calYear === undefined) {
+      const now = new Date();
+      calYear = now.getFullYear(); calMonth = now.getMonth();
+      selectedDate = todayKey();
+    }
+    document.getElementById('calTitle').textContent = `${calYear}年${calMonth+1}月`;
+
+    const datesWithEntries = new Set();
+    entries.forEach(e => datesWithEntries.add(fmtDate(e.createdAt).dateKey));
+
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+    const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+
+    const container = document.getElementById('calDays');
+    let html = '';
+    for (let i = 0; i < firstDay; i++) {
+      const d = prevMonthDays - firstDay + 1 + i;
+      const pm = calMonth === 0 ? 11 : calMonth - 1;
+      const py = calMonth === 0 ? calYear - 1 : calYear;
+      const key = `${py}-${String(pm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      html += `<div class="cal-day other-month" onclick="selectDate('${key}')">${d}</div>`;
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const cls = ['cal-day'];
+      if (datesWithEntries.has(key)) cls.push('has-entries');
+      if (key === todayKey()) cls.push('today');
+      if (key === selectedDate) cls.push('selected');
+      html += `<div class="${cls.join(' ')}" onclick="selectDate('${key}')">${d}</div>`;
+    }
+    const totalShown = firstDay + daysInMonth;
+    const remaining = Math.ceil(totalShown / 7) * 7 - totalShown;
+    for (let d = 1; d <= remaining; d++) {
+      const nm = calMonth === 11 ? 0 : calMonth + 1;
+      const ny = calMonth === 11 ? calYear + 1 : calYear;
+      const key = `${ny}-${String(nm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      html += `<div class="cal-day other-month" onclick="selectDate('${key}')">${d}</div>`;
+    }
+    container.innerHTML = html;
+  }
+  function selectDate(key) {
+    selectedDate = key;
+    const parts = key.split('-');
+    calYear = parseInt(parts[0]);
+    calMonth = parseInt(parts[1]) - 1;
+    renderCalendar();
+    renderDayEntries();
+  }
+  function changeMonth(delta) {
+    calMonth += delta;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  }
+  function renderDayEntries() {
+    const container = document.getElementById('dayEntries');
+    if (!container) return;
+    if (!selectedDate) { container.innerHTML = ''; return; }
+
+    const parts = selectedDate.split('-');
+    const dayStart = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2])).getTime();
+    const dayEnd = dayStart + 86400000;
+
+    const dayEntries = entries.filter(e => {
+      const t = new Date(e.createdAt).getTime();
+      return t >= dayStart && t < dayEnd;
+    }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const f = fmtDate(new Date(dayStart).toISOString());
+    const dateLabel = `${f.date} ${f.weekday}`;
+
+    if (dayEntries.length === 0) {
+      container.innerHTML = `<div class="empty-state"><h3>${dateLabel}</h3><p>这一天还没有日记</p></div>`;
+      return;
+    }
+
+    let html = `<div class="day-header"><h3>${dateLabel}</h3><span class="day-count">共 ${dayEntries.length} 篇</span></div>`;
+    dayEntries.forEach(e => {
+      const m = MOODS[e.mood] || MOODS.calm;
+      const ef = fmtDate(e.createdAt);
+      html += `
+        <div class="entry-card" style="border-left-color:${m.color};">
+          <div class="entry-top">
+            <span class="entry-mood">${m.emoji}</span>
+            <span class="entry-time">${ef.time}</span>
+            <div class="entry-actions">
+              <button onclick="openDetail('${e.id}')" title="查看">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button onclick="quickDelete('${e.id}')" title="删除">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="entry-text">${escapeHtml(e.content)}</div>
+        </div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function switchCalTab(mode) {
+    calViewMode = mode;
+    document.getElementById('tabCal').classList.toggle('active', mode === 'cal');
+    document.getElementById('tabList').classList.toggle('active', mode === 'list');
+    document.getElementById('calView').style.display = mode === 'cal' ? '' : 'none';
+    document.getElementById('listView').style.display = mode === 'list' ? '' : 'none';
+    if (mode === 'list') renderListView();
+  }
+  function renderListView() {
+    const el = document.getElementById('listView');
+    const sorted = entries.slice().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    document.getElementById('totalCount').textContent = entries.length;
+    if (sorted.length === 0) {
+      el.innerHTML = `<div class="empty-state"><h3>还没有日记</h3><p>去写日记页面写下第一篇吧</p></div>`;
+      return;
+    }
+    const groups = {};
+    sorted.forEach(e => {
+      const f = fmtDate(e.createdAt);
+      const k = `${f.date} ${f.weekday}`;
+      if (!groups[k]) groups[k] = [];
+      groups[k].push({ ...e, _f: f });
+    });
+    let html = '';
+    for (const [label, list] of Object.entries(groups)) {
+      html += `<div class="list-date-group"><div class="list-date-label">${label}</div>`;
+      list.forEach(e => {
+        const m = MOODS[e.mood] || MOODS.calm;
+        html += `
+          <div class="entry-card" style="border-left-color:${m.color};" onclick="openDetail('${e.id}')">
+            <div class="entry-top">
+              <span class="entry-mood">${m.emoji}</span>
+              <span class="entry-time">${e._f.time} · ${m.label}</span>
+            </div>
+            <div class="entry-text">${escapeHtml(e.content)}</div>
+          </div>`;
+      });
+      html += `</div>`;
+    }
+    el.innerHTML = html;
+  }
+
+  function quickDelete(id) {
+    if (!confirm('确定删除这篇日记吗？')) return;
+    entries = entries.filter(e => e.id !== id);
+    saveEntries();
+    renderDayEntries();
+    if (calViewMode === 'list') renderListView();
+    renderCalendar();
+    showToast('已删除');
+  }
+
+  // ===== Search =====
+  function renderSearchMoodChips() {
+    const el = document.getElementById('searchMoodChips');
+    if (!el) return;
+    el.innerHTML = Object.entries(MOODS).map(([key, m]) =>
+      `<button class="chip ${searchState.moods.has(key) ? 'selected' : ''}" onclick="toggleSearchMood('${key}')">
+        <span class="emoji">${m.emoji}</span>${m.label}
+      </button>`).join('');
+  }
+  function toggleSearchMood(key) {
+    if (searchState.moods.has(key)) searchState.moods.delete(key);
+    else searchState.moods.add(key);
+    renderSearchMoodChips();
+  }
+  function doSearch() {
+    searchState.kw = document.getElementById('searchKw').value.trim();
+    searchState.from = document.getElementById('searchFrom').value;
+    searchState.to = document.getElementById('searchTo').value;
+
+    let results = entries.slice().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    if (searchState.moods.size > 0) results = results.filter(e => searchState.moods.has(e.mood));
+    if (searchState.from) {
+      const t = new Date(searchState.from + 'T00:00:00').getTime();
+      results = results.filter(e => new Date(e.createdAt).getTime() >= t);
+    }
+    if (searchState.to) {
+      const t = new Date(searchState.to + 'T23:59:59').getTime();
+      results = results.filter(e => new Date(e.createdAt).getTime() <= t);
+    }
+    if (searchState.kw) {
+      const kw = searchState.kw.toLowerCase();
+      results = results.filter(e => e.content.toLowerCase().includes(kw));
+    }
+
+    const container = document.getElementById('searchResults');
+    if (results.length === 0) {
+      container.innerHTML = `<div class="results-hint">没有找到符合条件的日记</div>`;
+      return;
+    }
+
+    let html = `<div class="results-count">找到 ${results.length} 篇日记</div>`;
+    results.forEach(e => {
+      const m = MOODS[e.mood] || MOODS.calm;
+      const ef = fmtDate(e.createdAt);
+      const content = escapeHtml(e.content);
+      const highlighted = searchState.kw
+        ? content.replace(new RegExp(escapeRegex(searchState.kw), 'gi'), s => `<mark style="background:var(--accent-soft);color:var(--accent);padding:0 2px;border-radius:3px;">${s}</mark>`)
+        : content;
+      html += `
+        <div class="entry-card" style="border-left-color:${m.color};cursor:pointer;" onclick="openDetail('${e.id}')">
+          <div class="entry-top">
+            <span class="entry-mood">${m.emoji}</span>
+            <span class="entry-time">${ef.date} ${ef.time} · ${m.label}</span>
+          </div>
+          <div class="entry-text">${highlighted}</div>
+        </div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  // ===== Detail Sheet =====
+  function openDetail(id) {
+    currentDetailId = id;
+    const e = entries.find(x => x.id === id);
+    if (!e) return;
+    const m = MOODS[e.mood] || MOODS.calm;
+    const ef = fmtDate(e.createdAt);
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-mood-large">${m.emoji}</div>
+      <div class="detail-time">${ef.date} ${ef.weekday} ${ef.time} · ${m.label}</div>
+      <div class="detail-content">${escapeHtml(e.content)}</div>
+    `;
+    document.getElementById('detailSheet').classList.add('active');
+  }
+  function closeDetail() {
+    document.getElementById('detailSheet').classList.remove('active');
+    currentDetailId = null;
+  }
+  function deleteEntry() {
+    if (!currentDetailId) return;
+    if (!confirm('确定删除这篇日记吗？此操作不可恢复。')) return;
+    entries = entries.filter(e => e.id !== currentDetailId);
+    saveEntries();
+    closeDetail();
+    showToast('已删除');
+    if (currentTab === 'calendar') {
+      if (calViewMode === 'cal') renderDayEntries();
+      else renderListView();
+      renderCalendar();
+    }
+    if (currentTab === 'search') doSearch();
+  }
+  function editFromDetail() {
+    if (!currentDetailId) return;
+    const e = entries.find(x => x.id === currentDetailId);
+    if (!e) return;
+    closeDetail();
+    editingId = e.id;
+    editorMood = e.mood;
+    document.getElementById('editorTitle').textContent = '编辑日记';
+    document.getElementById('editorContent').value = e.content;
+    renderEditorMoodGrid();
+    document.getElementById('editorSheet').classList.add('active');
+  }
+
+  // ===== Editor Sheet =====
+  function openEditor() {
+    editingId = null;
+    editorMood = 'calm';
+    document.getElementById('editorTitle').textContent = '写日记';
+    document.getElementById('editorContent').value = '';
+    renderEditorMoodGrid();
+    document.getElementById('editorSheet').classList.add('active');
+  }
+  function closeEditor() {
+    document.getElementById('editorSheet').classList.remove('active');
+    editingId = null;
+  }
+  function renderEditorMoodGrid() {
+    const grid = document.getElementById('editorMoodGrid');
+    if (!grid) return;
+    grid.innerHTML = Object.entries(MOODS).map(([key, m]) => `
+      <div class="mood-item ${key === editorMood ? 'selected' : ''}" onclick="selectEditorMood('${key}')">
+        <span class="mood-emoji">${m.emoji}</span><span class="mood-label">${m.label}</span>
+      </div>`).join('');
+  }
+  function selectEditorMood(key) { editorMood = key; renderEditorMoodGrid(); }
+  function saveEditedEntry() {
+    const content = document.getElementById('editorContent').value.trim();
+    if (!content) { showToast('请输入日记内容'); return; }
+    if (editingId) {
+      const e = entries.find(x => x.id === editingId);
+      if (e) { e.content = content; e.mood = editorMood; }
+      showToast('已更新');
+    } else {
+      entries.unshift({
+        id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
+        createdAt: new Date().toISOString(), mood: editorMood, content,
+      });
+      showToast('已保存');
+    }
+    saveEntries();
+    closeEditor();
+    if (currentTab === 'calendar') {
+      if (calViewMode === 'cal') { renderCalendar(); renderDayEntries(); }
+      else renderListView();
+    }
+    if (currentTab === 'search') doSearch();
+  }
+
+  // ===== Settings Sheet =====
+  function openSettings() {
+    document.getElementById('settingsSheet').classList.add('active');
+    applyTheme();
+  }
+  function closeSettings() {
+    document.getElementById('settingsSheet').classList.remove('active');
+  }
+
+  // ===== Data Management =====
+  async function saveFile(filename, content, mimeType) {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
+      try {
+        const { Filesystem, Directory, Encoding } = window.Capacitor.Plugins.Filesystem;
+        const base64 = btoa(unescape(encodeURIComponent(content)));
+        await Filesystem.writeFile({
+          path: 'Download/' + filename,
+          data: base64,
+          directory: Directory.ExternalStorage,
+          encoding: Encoding.UTF8,
+        });
+        showToast('已保存到下载文件夹');
+        return true;
+      } catch (e) { console.warn('Filesystem fallback:', e); }
+    }
+    try {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('已开始下载');
+      return true;
+    } catch (e) { console.warn('Download fallback:', e); return false; }
+  }
+
+  function exportData() {
+    if (entries.length === 0) { showToast('暂无日记可导出'); return; }
+    const md = buildMarkdown();
+    const ts = new Date().toISOString().slice(0,10);
+    saveFile(`心流日记_${ts}.md`, md, 'text/markdown');
+  }
+
+  function backupData() {
+    if (entries.length === 0) { showToast('暂无数据可备份'); return; }
+    const backup = {
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      entries: entries,
+    };
+    const ts = new Date().toISOString().slice(0,10);
+    saveFile(`心流日记备份_${ts}.json`, JSON.stringify(backup, null, 2), 'application/json');
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        const data = JSON.parse(ev.target.result);
+        let imported = [];
+        if (data.version && data.entries) {
+          imported = data.entries;
+        } else if (Array.isArray(data)) {
+          imported = data;
+        } else {
+          throw new Error('格式错误');
+        }
+        if (!confirm(`将导入 ${imported.length} 篇日记，与现有数据合并。是否继续？`)) return;
+        const existingIds = new Set(entries.map(e => e.id));
+        let count = 0;
+        imported.forEach(e => {
+          if (e.id && !existingIds.has(e.id)) {
+            entries.push(e);
+            count++;
+          }
+        });
+        saveEntries();
+        showToast(`导入完成，新增 ${count} 篇`);
+        if (currentTab === 'calendar') {
+          if (calViewMode === 'cal') { renderCalendar(); renderDayEntries(); }
+          else renderListView();
+        }
+      } catch (err) {
+        showToast('导入失败：文件格式错误');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function clearAllData() {
+    if (!confirm('确定要清除所有日记数据吗？此操作不可恢复！')) return;
+    if (!confirm('再次确认：所有日记将被永久删除，无法恢复！')) return;
+    entries = [];
+    saveEntries();
+    showToast('已清除所有数据');
+    if (currentTab === 'calendar') {
+      if (calViewMode === 'cal') { renderCalendar(); renderDayEntries(); }
+      else renderListView();
+    }
+  }
+
+  function buildMarkdown() {
+    let md = '# 心流日记导出\n\n';
+    const sorted = entries.slice().sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+    sorted.forEach((e, i) => {
+      const m = MOODS[e.mood] || MOODS.calm;
+      const ef = fmtDate(e.createdAt);
+      md += `## ${i+1}. ${ef.date} ${ef.weekday} ${ef.time} ${m.emoji} ${m.label}\n\n${e.content}\n\n---\n\n`;
+    });
+    return md;
+  }
+
+  async function shareData() {
+    if (entries.length === 0) { showToast('暂无日记可分享'); return; }
+    const md = buildMarkdown();
+    const ts = new Date().toISOString().slice(0,10);
+    const filename = `心流日记_${ts}.md`;
+
+    /* 1) Capacitor 环境：写缓存 → 获取 URI → 系统分享面板 */
+    if (window.Capacitor && window.Capacitor.Plugins) {
+      const FS = window.Capacitor.Plugins.Filesystem;
+      const SH = window.Capacitor.Plugins.Share;
+      if (FS && SH) {
+        try {
+          const base64 = btoa(unescape(encodeURIComponent(md)));
+          await FS.writeFile({
+            path: filename,
+            data: base64,
+            directory: FS.Directory.Cache,
+            encoding: FS.Encoding.UTF8,
+          });
+          const uriRes = await FS.getUri({ directory: FS.Directory.Cache, path: filename });
+          await SH.share({
+            title: '心流日记',
+            text: '心流日记导出文件',
+            url: uriRes.uri,
+            dialogTitle: '分享到...',
+          });
+          return;
+        } catch (e) {
+          console.warn('Capacitor share failed, trying fallback:', e);
+        }
+      }
+    }
+
+    /* 2) 浏览器环境：navigator.share 支持文件则分享文件 */
+    if (navigator.canShare) {
+      try {
+        const blob = new Blob([md], { type: 'text/markdown' });
+        const file = new File([blob], filename, { type: 'text/markdown' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: '心流日记' });
+          return;
+        }
+      } catch (e) { if (e.name === 'AbortError') return; console.warn('File share failed:', e); }
+    }
+
+    /* 3) 最终 fallback：保存到下载文件夹 */
+    saveFile(filename, md, 'text/markdown');
+    showToast('已保存文件，请从文件管理器分享');
+  }
+
+  // ===== Utilities =====
+  function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  // ===== Init =====
+  document.addEventListener('DOMContentLoaded', function() {
+    loadEntries();
+    applyTheme();
+    renderWriteDate();
+    renderWriteMoodGrid();
+    renderSearchMoodChips();
+
+    document.querySelectorAll('.theme-option').forEach(btn => {
+      btn.addEventListener('click', () => setThemeMode(btn.dataset.mode));
+    });
+
+    document.querySelectorAll('.sheet-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+        }
+      });
+    });
+
+    document.getElementById('writeContent').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        saveFromHome();
+      }
+    });
+  });
+</script>
+</body>
+</html>
